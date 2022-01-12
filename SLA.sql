@@ -2,20 +2,26 @@ select
 	*
 	--status_request
 	--,count(distinct RequestNo)
-	,convert(decimal(10,2), (Days_Approve / count_request)) as SLA
 from (
 	select 
 		a.*,
 		b.CreatedDate CreatedDateRequest,
 		CASE
-			WHEN a.ARWrOLevel = 1 THEN DATEDIFF(Day, b.CreatedDate, a.Dateapprove)
-			WHEN SignerName = '-' THEN DATEDIFF(Day, a.CreatedDate, a.LastModifiedDate)
-			WHEN a.ARWrOLevel > a.LevelReject THEN 0
-			WHEN a.LagStatus < 0 THEN 0
-			WHEN a.Status = -1 THEN DATEDIFF(Day, LagDate, GETDATE())
-			WHEN (a.Status >= 0 AND Dateapprove IS NOT NULL) THEN DATEDIFF(Day, LagDate, Dateapprove) 
-			WHEN (a.Status >= 0 AND Dateapprove IS NULL) THEN DATEDIFF(Day, LagDate, a.LastModifiedDate) END AS Days_Approve,
-		cast(c.count_request as numeric) as count_request,
+			WHEN a.ARWrOLevel = 1 THEN b.CreatedDate
+			WHEN SignerName = '-' THEN a.CreatedDate
+			WHEN a.ARWrOLevel > a.LevelReject THEN a.CreatedDate
+			WHEN a.LagStatus < 0 THEN a.CreatedDate
+			WHEN a.Status = -1 THEN LagDate
+			WHEN (a.Status >= 0 AND Dateapprove IS NOT NULL) THEN LagDate
+			WHEN (a.Status >= 0 AND Dateapprove IS NULL) THEN LagDate END AS PreviousLevelDate,
+		CASE
+			WHEN a.ARWrOLevel = 1 THEN a.Dateapprove
+			WHEN SignerName = '-' THEN a.LastModifiedDate
+			WHEN a.ARWrOLevel > a.LevelReject THEN a.CreatedDate
+			WHEN a.LagStatus < 0 THEN a.CreatedDate
+			WHEN a.Status = -1 THEN GETDATE()
+			WHEN (a.Status >= 0 AND Dateapprove IS NOT NULL) THEN Dateapprove
+			WHEN (a.Status >= 0 AND Dateapprove IS NULL) THEN a.LastModifiedDate END AS CurrentLevelDate,
 		b.AREA_NAME, 
 		b.CustomerName, 
 		CASE when a.SignerName is null then b.SalesmanPIC else a.SignerName end Approver,

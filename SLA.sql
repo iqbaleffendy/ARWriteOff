@@ -1,7 +1,5 @@
 select 
 	*
-	--status_request
-	--,count(distinct RequestNo)
 from (
 	select 
 		a.*,
@@ -56,4 +54,3 @@ from (
 		group by ARWrOLevel
 	) c on a.ARWrOLevel = c.ARWrOLevel
 ) a
---group by Status_Request
